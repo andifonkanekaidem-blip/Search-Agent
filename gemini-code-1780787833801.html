@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Research Agent</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+/* Added position: relative and z-index to body to accommodate the background glow */
+body{font-family:system-ui,sans-serif;background:#0f0f0f;color:#e8e8e8;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem;position:relative;z-index:0}
+
+/* Gemini Blue Background Glow */
+body::before{content:"";position:fixed;top:-10%;left:50%;transform:translateX(-50%);width:120vw;height:120vh;background:radial-gradient(circle at top, rgba(138, 180, 248, 0.12) 0%, rgba(15, 15, 15, 0) 60%);z-index:-1;pointer-events:none}
+
+h1{font-size:1.5rem;font-weight:600;margin-bottom:0.25rem;color:#fff}
+.subtitle{font-size:0.875rem;color:#666;margin-bottom:2rem}
+.search-wrap{width:100%;max-width:680px;display:flex;gap:8px;margin-bottom:1.5rem}
+input[type=text]{flex:1;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:12px 16px;font-size:0.95rem;color:#e8e8e8;outline:none;transition:border-color 0.2s, box-shadow 0.2s}
+input[type=text]:focus{border-color:#444;box-shadow:0 0 10px rgba(138, 180, 248, 0.05)}
+input[type=text]::placeholder{color:#555}
+button#searchBtn{background:#fff;color:#000;border:none;border-radius:10px;padding:12px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity 0.2s}
+button#searchBtn:hover{opacity:0.85}
+button#searchBtn:disabled{opacity:0.4;cursor:not-allowed}
+.output{width:100%;max-width:680px}
+.status-box{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem}
+.status-title{font-size:0.75rem;color:#555;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem}
+.status-item{font-size:0.875rem;color:#888;padding:3px 0;display:flex;align-items:center;gap:8px}
+.status-item.active{color:#e8e8e8}
+.dot{width:6px;height:6px;border-radius:50%;background:#333;flex-shrink:0}
+.dot.active{background:#4ade80}
+.dot.done{background:#555}
+.response-box{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:1.25rem 1.5rem;font-size:0.9rem;line-height:1.7;color:#d4d4d4}
+.response-box h1,.response-box h2,.response-box h3{color:#fff;font-weight:600;margin:1rem 0 0.5rem}
+.response-box h1{font-size:1.1rem}
+.response-box h2{font-size:1rem}
+.response-box h3{font-size:0.95rem}
+.response-box p{margin-bottom:0.75rem}
+.response-box ul,.response-box ol{padding-left:1.25rem;margin-bottom:0.75rem}
+.response-box li{margin-bottom:0.25rem}
+.response-box strong{color:#fff;font-weight:600}
+.response-box hr{border:none;border-top:1px solid #2a2a2a;margin:1rem 0}
+.rejection-box{background:#1a1a1a;border:1px solid #3a2020;border-radius:10px;padding:1rem 1.25rem;color:#f87171;font-size:0.9rem}
+.rejection-box .label{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#7f1d1d;margin-bottom:0.4rem}
+.weather-box{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:1.25rem 1.5rem}
+.weather-temp{font-size:2.5rem;font-weight:700;color:#fff}
+.weather-meta{font-size:0.85rem;color:#666;margin-top:4px}
+.hidden{display:none}
+.spinner{display:inline-block;width:10px;height:10px;border:1.5px solid #333;border-top-color:#888;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<h1>Research Agent</h1>
+<p class="subtitle">Ask anything — news, facts, weather, comparisons</p>
+
+<div class="search-wrap">
+  <input type="text" id="queryInput" placeholder="Who are the 2027 Nigerian presidential candidates?" />
+  <button id="searchBtn" onclick="runSearch()">Search</button>
+</div>
+
+<div class="output" id="output"></div>
+
+<script>
+const marked_lib = window.marked;
+
+async function runSearch() {
+  const query = document.getElementById('queryInput').value.trim();
+  if (!query) return;
+
+  const btn = document.getElementById('searchBtn');
+  const output = document.getElementById('output');
+  btn.disabled = true;
+  btn.textContent = 'Searching...';
+  output.innerHTML = '';
+
+  const statusBox = document.createElement('div');
+  statusBox.className = 'status-box';
+  statusBox.innerHTML = '<div class="status-title">Agent activity</div><div id="statusList"></div>';
+  output.appendChild(statusBox);
+
+  const statusList = document.getElementById('statusList');
+  const statusItems = [];
+
+  function addStatus(msg) {
+    const existing = statusItems.find(i => i.text === msg);
+    if (existing) return;
+    if (statusItems.length > 0) {
+      const prev = statusItems[statusItems.length - 1];
+      prev.el.querySelector('.dot').className = 'dot done';
+      prev.el.querySelector('.spinner')?.remove();
+      prev.el.style.color = '#555';
+    }
+    const item = document.createElement('div');
+    item.className = 'status-item active';
+    item.innerHTML = `<div class="dot active"></div><span>${msg}</span><div class="spinner"></div>`;
+    statusList.appendChild(item);
+    statusItems.push({ text: msg, el: item });
+  }
+
+  function finalizeStatus() {
+    if (statusItems.length > 0) {
+      const last = statusItems[statusItems.length - 1];
+      last.el.querySelector('.dot').className = 'dot done';
+      last.el.querySelector('.spinner')?.remove();
+      last.el.style.color = '#555';
+    }
+  }
+
+  try {
+    const response = await fetch('http://localhost:8000/summarise', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query })
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        const msg = line.trim();
+        if (!msg) continue;
+
+        if (msg.startsWith('DONE:')) {
+          finalizeStatus();
+          const content = msg.slice(5).trim();
+          renderResponse(output, content);
+        } else if (msg.startsWith('REJECT:')) {
+          finalizeStatus();
+          const reason = msg.slice(7).trim();
+          renderRejection(output, reason);
+        } else {
+          addStatus(msg);
+        }
+      }
+    }
+
+    if (buffer.trim()) {
+      if (buffer.startsWith('DONE:')) {
+        finalizeStatus();
+        renderResponse(output, buffer.slice(5).trim());
+      } else if (buffer.startsWith('REJECT:')) {
+        finalizeStatus();
+        renderRejection(output, buffer.slice(7).trim());
+      }
+    }
+
+  } catch (err) {
+    finalizeStatus();
+    output.innerHTML += `<div class="rejection-box"><div class="label">Connection error</div>${err.message}</div>`;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Search';
+}
+
+function renderResponse(container, content) {
+  const box = document.createElement('div');
+  box.className = 'response-box';
+  box.innerHTML = marked_lib.parse(content);
+  container.appendChild(box);
+}
+
+function renderRejection(container, reason) {
+  const box = document.createElement('div');
+  box.className = 'rejection-box';
+  box.innerHTML = `<div class="label">Unable to process</div>${reason}`;
+  container.appendChild(box);
+}
+
+document.getElementById('queryInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runSearch();
+});
+</script>
+</body>
+</html>
