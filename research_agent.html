@@ -7,30 +7,83 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-/* Added position: relative and z-index to body to accommodate the background glow */
-body{font-family:system-ui,sans-serif;background:#0f0f0f;color:#e8e8e8;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem;position:relative;z-index:0}
 
-/* Gemini Blue Background Glow */
-body::before{content:"";position:fixed;top:-10%;left:50%;transform:translateX(-50%);width:120vw;height:120vh;background:radial-gradient(circle at top, rgba(138, 180, 248, 0.12) 0%, rgba(15, 15, 15, 0) 60%);z-index:-1;pointer-events:none}
+body{
+  font-family:system-ui,sans-serif;
+  background:#0f0f0f;
+  color:#e8e8e8;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:2rem 1rem;
+  position:relative;
+  z-index:0
+}
+
+/* Gemini Blue Background Glow — Fixed position and increased opacity to 0.25 */
+body::before{
+  content:"";
+  position:fixed;
+  top:-10%;
+  left:50%;
+  transform:translateX(-50%);
+  width:120vw;
+  height:50vh;
+  background:radial-gradient(ellipse at top, rgba(138, 180, 248, 0.25) 0%, rgba(15, 15, 15, 0) 60%);
+  z-index:-1;
+  pointer-events:none
+}
 
 h1{font-size:1.5rem;font-weight:600;margin-bottom:0.25rem;color:#fff}
 .subtitle{font-size:0.875rem;color:#666;margin-bottom:2rem}
 .search-wrap{width:100%;max-width:680px;display:flex;gap:8px;margin-bottom:1.5rem}
-input[type=text]{flex:1;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:12px 16px;font-size:0.95rem;color:#e8e8e8;outline:none;transition:border-color 0.2s, box-shadow 0.2s}
+
+input[type=text]{
+  flex:1;
+  background:#1a1a1a;
+  border:1px solid #2a2a2a;
+  border-radius:10px;
+  padding:12px 16px;
+  font-size:0.95rem;
+  color:#e8e8e8;
+  outline:none;
+  transition:border-color 0.2s, box-shadow 0.2s
+}
 input[type=text]:focus{border-color:#444;box-shadow:0 0 10px rgba(138, 180, 248, 0.05)}
 input[type=text]::placeholder{color:#555}
+
 button#searchBtn{background:#fff;color:#000;border:none;border-radius:10px;padding:12px 20px;font-size:0.9rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity 0.2s}
 button#searchBtn:hover{opacity:0.85}
 button#searchBtn:disabled{opacity:0.4;cursor:not-allowed}
+
 .output{width:100%;max-width:680px}
+
+/* Collapsible Agent Activity Box styling updates */
 .status-box{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1rem}
-.status-title{font-size:0.75rem;color:#555;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.5rem}
+.status-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none}
+.status-title{font-size:0.75rem;color:#555;text-transform:uppercase;letter-spacing:0.05em;flex:1}
+.chevron{font-size:0.75rem;color:#555;transition:transform 0.2s ease;transform:rotate(0deg)}
+.status-box.collapsed .chevron{transform:rotate(-90deg)}
+#statusList{margin-top:0.5rem;transition:display 0.2s ease}
+
 .status-item{font-size:0.875rem;color:#888;padding:3px 0;display:flex;align-items:center;gap:8px}
 .status-item.active{color:#e8e8e8}
 .dot{width:6px;height:6px;border-radius:50%;background:#333;flex-shrink:0}
 .dot.active{background:#4ade80}
 .dot.done{background:#555}
-.response-box{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:1.25rem 1.5rem;font-size:0.9rem;line-height:1.7;color:#d4d4d4}
+
+/* Cleaned Response Box Structure with background & border explicitly set */
+.response-box{
+  background:#1a1a1a;
+  border:1px solid #2a2a2a;
+  border-radius:10px;
+  padding:1.25rem 1.5rem;
+  font-size:0.9rem;
+  line-height:1.7;
+  color:#d4d4d4;
+  margin-bottom:1rem
+}
 .response-box h1,.response-box h2,.response-box h3{color:#fff;font-weight:600;margin:1rem 0 0.5rem}
 .response-box h1{font-size:1.1rem}
 .response-box h2{font-size:1rem}
@@ -40,12 +93,15 @@ button#searchBtn:disabled{opacity:0.4;cursor:not-allowed}
 .response-box li{margin-bottom:0.25rem}
 .response-box strong{color:#fff;font-weight:600}
 .response-box hr{border:none;border-top:1px solid #2a2a2a;margin:1rem 0}
+
 .rejection-box{background:#1a1a1a;border:1px solid #3a2020;border-radius:10px;padding:1rem 1.25rem;color:#f87171;font-size:0.9rem}
 .rejection-box .label{font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:#7f1d1d;margin-bottom:0.4rem}
+
 .weather-box{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;padding:1.25rem 1.5rem}
 .weather-temp{font-size:2.5rem;font-weight:700;color:#fff}
 .weather-meta{font-size:0.85rem;color:#666;margin-top:4px}
-.hidden{display:none}
+
+.hidden{display:none !important}
 .spinner{display:inline-block;width:10px;height:10px;border:1.5px solid #333;border-top-color:#888;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 </style>
@@ -64,6 +120,16 @@ button#searchBtn:disabled{opacity:0.4;cursor:not-allowed}
 
 <script>
 const marked_lib = window.marked;
+let activeResponseBox = null;
+
+function toggleThinkingBlock() {
+  const box = document.getElementById('statusBoxContainer');
+  const list = document.getElementById('statusList');
+  if (box && list) {
+    box.classList.toggle('collapsed');
+    list.classList.toggle('hidden');
+  }
+}
 
 async function runSearch() {
   const query = document.getElementById('queryInput').value.trim();
@@ -74,10 +140,19 @@ async function runSearch() {
   btn.disabled = true;
   btn.textContent = 'Searching...';
   output.innerHTML = '';
+  activeResponseBox = null;
 
+  // Collapsible HTML Layout for Status Box
   const statusBox = document.createElement('div');
   statusBox.className = 'status-box';
-  statusBox.innerHTML = '<div class="status-title">Agent activity</div><div id="statusList"></div>';
+  statusBox.id = 'statusBoxContainer';
+  statusBox.innerHTML = `
+    <div class="status-header" onclick="toggleThinkingBlock()">
+      <div class="status-title">Agent activity</div>
+      <div class="chevron">▼</div>
+    </div>
+    <div id="statusList"></div>
+  `;
   output.appendChild(statusBox);
 
   const statusList = document.getElementById('statusList');
@@ -127,7 +202,7 @@ async function runSearch() {
       buffer = lines.pop();
 
       for (const line of lines) {
-        const msg = line.trim();
+        let msg = line.trim();
         if (!msg) continue;
 
         if (msg.startsWith('DONE:')) {
@@ -139,18 +214,40 @@ async function runSearch() {
           const reason = msg.slice(7).trim();
           renderRejection(output, reason);
         } else {
-          addStatus(msg);
+          // Safeguard Rules: Clean leaking chunks out of thinking block
+          if (msg.includes('---')) {
+            msg = msg.split('---')[0].trim();
+          }
+
+          if (!msg) continue;
+
+          // Routing switch: If it reads like markdown payload instead of activity description
+          if (msg.length > 60 || msg.startsWith('#') || msg.startsWith('*') || msg.startsWith('-')) {
+            renderResponse(output, msg);
+          } else {
+            addStatus(msg);
+          }
         }
       }
     }
 
     if (buffer.trim()) {
-      if (buffer.startsWith('DONE:')) {
+      let finalMsg = buffer.trim();
+      if (finalMsg.startsWith('DONE:')) {
         finalizeStatus();
-        renderResponse(output, buffer.slice(5).trim());
-      } else if (buffer.startsWith('REJECT:')) {
+        renderResponse(output, finalMsg.slice(5).trim());
+      } else if (finalMsg.startsWith('REJECT:')) {
         finalizeStatus();
-        renderRejection(output, buffer.slice(7).trim());
+        renderRejection(output, finalMsg.slice(7).trim());
+      } else {
+        if (finalMsg.includes('---')) finalMsg = finalMsg.split('---')[0].trim();
+        if (finalMsg) {
+          if (finalMsg.length > 60 || finalMsg.startsWith('#') || finalMsg.startsWith('*') || finalMsg.startsWith('-')) {
+            renderResponse(output, finalMsg);
+          } else {
+            addStatus(finalMsg);
+          }
+        }
       }
     }
 
@@ -164,10 +261,16 @@ async function runSearch() {
 }
 
 function renderResponse(container, content) {
-  const box = document.createElement('div');
-  box.className = 'response-box';
-  box.innerHTML = marked_lib.parse(content);
-  container.appendChild(box);
+  // Append incoming data chunks safely inside a single, persistent response container
+  if (!activeResponseBox) {
+    activeResponseBox = document.createElement('div');
+    activeResponseBox.className = 'response-box';
+    container.appendChild(activeResponseBox);
+    activeResponseBox.markdownRaw = "";
+  }
+  
+  activeResponseBox.markdownRaw += (activeResponseBox.markdownRaw ? '\n' : '') + content;
+  activeResponseBox.innerHTML = marked_lib.parse(activeResponseBox.markdownRaw);
 }
 
 function renderRejection(container, reason) {
@@ -175,6 +278,9 @@ function renderRejection(container, reason) {
   box.className = 'rejection-box';
   box.innerHTML = `<div class="label">Unable to process</div>${reason}`;
   container.appendChild(box);
+
+  document.getElementById('searchBtn').disabled = false;
+  document.getElementById('searchBtn').textContent = 'Search';
 }
 
 document.getElementById('queryInput').addEventListener('keydown', e => {
