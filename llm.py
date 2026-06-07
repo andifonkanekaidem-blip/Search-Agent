@@ -1,10 +1,10 @@
 from google.genai import Client,types
-from schema import ToolUseSchema,RejectionSchema,SummariseRequest
-from tool_box import app_search,get_weather
+from tool_box import app_search,get_weather,run_code
 import json
 tools = {
     "search":app_search,
-    "weather":get_weather
+    "weather":get_weather,
+    "code_exec":run_code
 }
 def cleanresponse(resp:str)->str:
     raw_text = resp.strip()
@@ -29,6 +29,7 @@ async def get_summary(gemini_client:Client,config:types.GenerateContentConfig,qu
         
         raw_text = cleanresponse(response.text)
         json_response = json.loads(raw_text)
+        print(json_response)
         if "tool" in json_response:
             if json_response["tool"] in tools:
                 print(f"\nAssistant: {json_response["thought"]}\nCalling {json_response["tool"]} tool....")
@@ -41,6 +42,10 @@ async def get_summary(gemini_client:Client,config:types.GenerateContentConfig,qu
                     await status_func("🌥️ Getting Weather Information...")
                     result = await tools[json_response["tool"]](json_response["tool_query"])
                     await status_func("✅ Weather Information gotten")
+                elif json_response["tool"] == 'code_exec':
+                    await status_func("🧮 Calculating...")
+                    result = await tools[json_response["tool"]](json_response["tool_query"])
+                    await status_func("✅ Calculation complete")
                 state.append(f"Assistant: {json_response["thought"]}")
                 state.append(f"\nTool Query by Assistant: {json_response["tool_query"]}")
                 state.append(f"Tool Response: '{result}'")

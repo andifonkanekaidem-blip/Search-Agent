@@ -2,9 +2,9 @@ from pydantic import BaseModel,Field
 from typing import Literal
 
 class ToolUseSchema(BaseModel):
-    tool:Literal['search','weather']
+    tool:Literal['search','weather','code_exec']
     thought:str = Field(...,description="Here you place your thought process")
-    tool_query:str = Field(None,description="This is where you place the search query or city location.")
+    tool_query:str = Field(None,description="This is where you place the search query,city location or python")
 
 class ResponseSchema(BaseModel):
     response:str = Field(...,description="Put the answer to the question here")

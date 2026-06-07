@@ -19,8 +19,28 @@ async def get_weather(location:str)->str:
     )
     coords = geo.json()["results"][0]
     
-    # Then get weather
     weather = await httpx.AsyncClient().get(
         f"https://api.open-meteo.com/v1/forecast?latitude={coords['latitude']}&longitude={coords['longitude']}&current_weather=true"
     )
     return str(weather.json()["current_weather"])
+
+import asyncio
+import tempfile
+import sys
+
+async def run_code(code):
+    # create temp file
+    with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
+        f.write(code.encode())
+        f.flush()
+        path = f.name
+    process = await asyncio.create_subprocess_exec(
+        "python",
+        path,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+
+    stdout, stderr = await process.communicate()
+
+    return stdout.decode(), stderr.decode()
