@@ -38,7 +38,7 @@ async def get_summary(gemini_client:Client,config:types.GenerateContentConfig,qu
                     result = await tools[json_response["tool"]](search_Client,json_response["tool_query"])
                     await status_func("✅ Search Complete")
                 elif json_response["tool"] == 'weather':
-                    await status_func("🌥️ Getting Weather Inforation...")
+                    await status_func("🌥️ Getting Weather Information...")
                     result = await tools[json_response["tool"]](json_response["tool_query"])
                     await status_func("✅ Weather Information gotten")
                 state.append(f"Assistant: {json_response["thought"]}")
