@@ -45,7 +45,7 @@ templates = Jinja2Templates(
 app.mount("/static",StaticFiles(directory="static"),name="static")
 @app.get('/')
 async def index(request:Request):
-    return templates.TemplateResponse("research_agent.html",{"request":request})
+    return templates.TemplateResponse(request=request, name="research_agent.html")
 @app.post("/summarise")
 async def web_search(query:SummariseRequest):
     async def generate():  
