@@ -43,8 +43,8 @@ async def get_summary(gemini_client:Client,config:types.GenerateContentConfig,qu
                     await status_func("🧮 Calculating...||END||")
                     result = await tools[json_response["tool"]](json_response["tool_query"])
                     await status_func("✅ Calculation complete||END||")
-                state.append(f"Assistant: {json_response["thought"]}")
-                state.append(f"\nTool Query by Assistant: {json_response["tool_query"]}")
+                state.append(f"Assistant: {json_response['thought']}")
+                state.append(f"\nTool Query by Assistant: {json_response['tool_query']}")
                 state.append(f"Tool Response: '{result}'")
         elif "response" in json_response:
             return json_response
