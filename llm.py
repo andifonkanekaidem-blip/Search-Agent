@@ -31,8 +31,6 @@ async def get_summary(gemini_client:Client,config:types.GenerateContentConfig,qu
         json_response = json.loads(raw_text)
         if "tool" in json_response:
             if json_response["tool"] in tools:
-                print(f"\nAssistant: {json_response["thought"]}\nCalling {json_response["tool"]} tool....")
-                print(f"\nTool Query: {json_response["tool_query"]}")
                 if json_response["tool"] == 'search':
                     await status_func("🔍 Searching the web...||END||")
                     result = await tools[json_response["tool"]](search_Client,json_response["tool_query"])
@@ -48,7 +46,6 @@ async def get_summary(gemini_client:Client,config:types.GenerateContentConfig,qu
                 state.append(f"Assistant: {json_response["thought"]}")
                 state.append(f"\nTool Query by Assistant: {json_response["tool_query"]}")
                 state.append(f"Tool Response: '{result}'")
-                print(f"\nTool response: {result[0:100]}....")
         elif "response" in json_response:
             return json_response
             

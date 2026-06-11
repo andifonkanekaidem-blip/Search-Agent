@@ -8,9 +8,7 @@ import docker
 try:
     docker_client = docker.from_env()
     docker_client.ping()
-    print("Found ")
 except Exception as e:
-    print("⚠️⚠️ Connection Failed...")
     docker_client = None
 async def app_search(tavily_client:AsyncTavilyClient,query:str)->str:
     try:
@@ -54,7 +52,6 @@ def run_ai_code(ai_code:str)->str:
     try:
         container.wait(timeout=10)
         logs = container.logs().decode()
-        print("Done")
         return logs
     except Exception as e:
         raise e
