@@ -71,4 +71,4 @@ async def web_search(query:SummariseRequest):
 
 if __name__ == "__main__":
 
-    uvicorn.run("app:app",reload=True)
+    uvicorn.run("app:app",host="0.0.0.0",reload=True)
