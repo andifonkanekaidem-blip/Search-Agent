@@ -1,4 +1,6 @@
-from fastapi import FastAPI,HTTPException
+from fastapi import FastAPI,HTTPException,Request
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
 from contextlib import asynccontextmanager
 from google.genai import Client
@@ -43,6 +45,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+templates = Jinja2Templates(
+    directory="static/templates"
+)
+app.mount("/static",StaticFiles(directory="static"),name="static")
+@app.get('/')
+async def index(request:Request):
+    return templates.TemplateResponse("research_agent.html",{"request":request})
 @app.post("/summarise")
 async def web_search(query:SummariseRequest):
     async def generate():  
