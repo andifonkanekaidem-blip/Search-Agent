@@ -15,7 +15,7 @@ from llm import get_summary
 from dotenv import load_dotenv
 import uvicorn
 import asyncio
-from fastapi.middleware.cors import CORSMiddleware
+
 
 
 load_dotenv()
@@ -38,16 +38,10 @@ async def lifespan(app:FastAPI):
     await tavily_client.close()
 
 app =  FastAPI(lifespan=lifespan)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 templates = Jinja2Templates(
     directory="static/templates"
 )
+
 app.mount("/static",StaticFiles(directory="static"),name="static")
 @app.get('/')
 async def index(request:Request):
