@@ -1,6 +1,17 @@
 from tavily import AsyncTavilyClient
 from datetime import datetime,timezone
 import httpx
+import asyncio
+from fastapi import HTTPException
+import docker
+
+try:
+    docker_client = docker.from_env()
+    docker_client.ping()
+    print("Found ")
+except Exception as e:
+    print("⚠️⚠️ Connection Failed...")
+    docker_client = None
 async def app_search(tavily_client:AsyncTavilyClient,query:str)->str:
     try:
         result = await tavily_client.search(query, max_results=5,search_depth="basic")
@@ -24,23 +35,38 @@ async def get_weather(location:str)->str:
     )
     return str(weather.json()["current_weather"])
 
-import asyncio
-import tempfile
-import sys
 
-async def run_code(code):
-    # create temp file
-    with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
-        f.write(code.encode())
-        f.flush()
-        path = f.name
-    process = await asyncio.create_subprocess_exec(
-        "python",
-        path,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE
+def run_ai_code(ai_code:str)->str:
+    if docker_client is None:
+        raise RuntimeError("Docker is Down")
+
+    ai_code = ai_code.replace('"','\\"')
+    container = docker_client.containers.run(
+        image="run_code_sandbox:latest",
+        command=f'python -c "{ai_code}"',
+        detach=True,
+        network_disabled=True,
+        mem_limit="128m",
+        nano_cpus=500000000,
+
     )
 
-    stdout, stderr = await process.communicate()
+    try:
+        container.wait(timeout=10)
+        logs = container.logs().decode()
+        print("Done")
+        return logs
+    except Exception as e:
+        raise e
+    finally:
+        container.stop()
+        container.remove()
 
-    return stdout.decode(), stderr.decode()
+async def run_code(code:str)->str:
+    if docker_client is None:
+        raise HTTPException(500)
+    try:
+        result = await asyncio.to_thread(run_ai_code,code)
+        return result.strip()
+    except Exception:
+        return "Timeout"

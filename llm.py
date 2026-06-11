@@ -16,10 +16,10 @@ async def get_summary(gemini_client:Client,config:types.GenerateContentConfig,qu
     state = [
         f"User: {query}"
     ]
-    await status_func("✅ Validating Input.....")
+    await status_func("✅ Validating Input.....||END||")
     for _t in range(10):
         print(f"--- Step {_t+1} ---")
-        await status_func("📝 Generating Content...")
+        await status_func("📝 Generating Content...||END||")
         response = await gemini_client.models.generate_content(
             model='gemma-4-31b-it',
             contents=state,
@@ -29,23 +29,22 @@ async def get_summary(gemini_client:Client,config:types.GenerateContentConfig,qu
         
         raw_text = cleanresponse(response.text)
         json_response = json.loads(raw_text)
-        print(json_response)
         if "tool" in json_response:
             if json_response["tool"] in tools:
                 print(f"\nAssistant: {json_response["thought"]}\nCalling {json_response["tool"]} tool....")
                 print(f"\nTool Query: {json_response["tool_query"]}")
                 if json_response["tool"] == 'search':
-                    await status_func("🔍 Searching the web...")
+                    await status_func("🔍 Searching the web...||END||")
                     result = await tools[json_response["tool"]](search_Client,json_response["tool_query"])
-                    await status_func("✅ Search Complete")
+                    await status_func("✅ Search Complete||END||")
                 elif json_response["tool"] == 'weather':
-                    await status_func("🌥️ Getting Weather Information...")
+                    await status_func("🌥️ Getting Weather Information...||END||")
                     result = await tools[json_response["tool"]](json_response["tool_query"])
-                    await status_func("✅ Weather Information gotten")
+                    await status_func("✅ Weather Information gotten||END||")
                 elif json_response["tool"] == 'code_exec':
-                    await status_func("🧮 Calculating...")
+                    await status_func("🧮 Calculating...||END||")
                     result = await tools[json_response["tool"]](json_response["tool_query"])
-                    await status_func("✅ Calculation complete")
+                    await status_func("✅ Calculation complete||END||")
                 state.append(f"Assistant: {json_response["thought"]}")
                 state.append(f"\nTool Query by Assistant: {json_response["tool_query"]}")
                 state.append(f"Tool Response: '{result}'")

@@ -159,6 +159,7 @@ async function runSearch() {
   const statusItems = [];
 
   function addStatus(msg) {
+  if (msg.includes('**') || /^\d+\./.test(msg) || msg.length > 120) return;
     const existing = statusItems.find(i => i.text === msg);
     if (existing) return;
     if (statusItems.length > 0) {
@@ -170,7 +171,7 @@ async function runSearch() {
     const item = document.createElement('div');
     item.className = 'status-item active';
     item.innerHTML = `<div class="dot active"></div><span>${msg}</span><div class="spinner"></div>`;
-    statusList.appendChild(item);
+    statusList.appendChild(item); 
     statusItems.push({ text: msg, el: item });
   }
 
@@ -198,13 +199,13 @@ async function runSearch() {
       const { done, value } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
+      const lines = buffer.split('||END||');
       buffer = lines.pop();
 
       for (const line of lines) {
         let msg = line.trim();
         if (!msg) continue;
-
+        console.log("chunk:", msg);
         if (msg.startsWith('DONE:')) {
           finalizeStatus();
           const content = msg.slice(5).trim();
@@ -221,12 +222,8 @@ async function runSearch() {
 
           if (!msg) continue;
 
-          // Routing switch: If it reads like markdown payload instead of activity description
-          if (msg.length > 60 || msg.startsWith('#') || msg.startsWith('*') || msg.startsWith('-')) {
-            renderResponse(output, msg);
-          } else {
-            addStatus(msg);
-          }
+          
+          addStatus(msg)
         }
       }
     }

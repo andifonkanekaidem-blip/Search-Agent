@@ -53,9 +53,9 @@ async def web_search(query:SummariseRequest):
             try:
                 summary = await get_summary(app.state.gemini_client,app.state.gemini_client_config,query.query,app.state.tavily_client,on_status)
                 if "reason" in summary:
-                    await on_status(f"REJECT: {summary['reason']}")
+                    await on_status(f"REJECT: {summary['reason']}||END||")
                 else:
-                    await on_status(f"DONE: \n{summary['response']}")
+                    await on_status(f"DONE: {summary['response']}||END||")
             except Exception as e:
                 raise HTTPException(500,detail=str(e))
         asyncio.create_task(run())
