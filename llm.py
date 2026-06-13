@@ -17,16 +17,14 @@ async def get_summary(gemini_client:Client,config:types.GenerateContentConfig,qu
         f"User: {query}"
     ]
     await status_func("✅ Validating Input.....||END||")
-    for _t in range(10):
-        print(f"--- Step {_t+1} ---")
+    for _ in range(10):
         await status_func("📝 Generating Content...||END||")
         response = await gemini_client.models.generate_content(
-            model='gemma-4-31b-it',
+            model='gemini-3.1-flash-lite',
             contents=state,
             config=config
             
         )
-        
         raw_text = cleanresponse(response.text)
         json_response = json.loads(raw_text)
         if "tool" in json_response:

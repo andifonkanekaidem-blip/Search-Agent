@@ -16,8 +16,6 @@ from dotenv import load_dotenv
 import uvicorn
 import asyncio
 
-
-
 load_dotenv()
 @asynccontextmanager
 async def lifespan(app:FastAPI):
@@ -60,7 +58,8 @@ async def web_search(query:SummariseRequest):
                 else:
                     await on_status(f"DONE: {summary['response']}||END||")
             except Exception as e:
-                raise HTTPException(500,detail=str(e))
+                raise
+                #await on_status(f"REJECT: Something went wrong...||END||")
         asyncio.create_task(run())
         while True:
             msg = await queue.get()
@@ -71,4 +70,4 @@ async def web_search(query:SummariseRequest):
 
 if __name__ == "__main__":
 
-    uvicorn.run("app:app",host="0.0.0.0",reload=True)
+    uvicorn.run("app:app",reload=True)
