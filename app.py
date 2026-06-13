@@ -58,8 +58,7 @@ async def web_search(query:SummariseRequest):
                 else:
                     await on_status(f"DONE: {summary['response']}||END||")
             except Exception as e:
-                raise
-                #await on_status(f"REJECT: Something went wrong...||END||")
+                await on_status(f"REJECT: Something went wrong...||END||")
         asyncio.create_task(run())
         while True:
             msg = await queue.get()
